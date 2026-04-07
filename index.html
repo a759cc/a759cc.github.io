@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全球核心资产监控 | Glassmorphism</title>
+    <style>
+        :root {
+            --primary-text: #ffffff;
+            --secondary-text: rgba(255, 255, 255, 0.7);
+            --up-color: #00e676;   /* 股票上涨的绿色 */
+            --down-color: #ff5252; /* 股票下跌的红色 */
+            --glass-bg: rgba(255, 255, 255, 0.05); 
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(20px);
+            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --font-num: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            color: var(--primary-text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #0f141e;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        /* 动态多源流光背景 */
+        .background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .circle { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.6; animation: move linear infinite; }
+        .circle-1 { width: 450px; height: 450px; background: #2962ff; top: -10%; left: -10%; animation-duration: 25s; }
+        .circle-2 { width: 550px; height: 550px; background: #00b4d8; bottom: -20%; right: -10%; animation-duration: 30s; animation-direction: reverse; }
+        .circle-3 { width: 350px; height: 350px; background: #7b2cbf; top: 40%; left: 60%; animation-duration: 20s; }
+
+        @keyframes move {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(80px, 60px) rotate(180deg); }
+            100% { transform: translate(0, 0) rotate(360deg); }
+        }
+
+        /* 主体卡片 */
+        .glass-card {
+            width: 100%;
+            max-width: 900px;
+            padding: 40px;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            animation: fadeIn 1s ease-out;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, #fff, #90caf9);
+            -webkit-background-clip: text;
+            color: transparent;
+            font-weight: 800;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--secondary-text);
+            margin-bottom: 30px;
+        }
+
+        .pulse {
+            width: 8px; height: 8px; background-color: var(--up-color);
+            border-radius: 50%; margin-right: 8px;
+            box-shadow: 0 0 10px var(--up-color);
+            animation: blink 1.5s infinite;
+        }
+
+        /* 股票网格 */
+        .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        /* 单个股票的小玻璃卡片 */
+        .ticker-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+            transition: transform 0.3s ease, background 0.3s ease;
+            position: relative;
+        }
+
+        .ticker-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .ticker-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-text);
+            margin-bottom: 2px;
+        }
+
+        .ticker-symbol {
+            font-size: 0.85rem;
+            color: var(--secondary-text);
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        .ticker-price {
+            font-family: var(--font-num);
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            transition: color 0.3s ease;
+        }
+
+        .ticker-change {
+            font-family: var(--font-num);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .up { color: var(--up-color); }
+        .down { color: var(--down-color); }
+        .neutral { color: var(--secondary-text); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        @media (max-width: 600px) {
+            .glass-card { padding: 25px; }
+            .stock-grid { grid-template-columns: repeat(2, 1fr); }
+            .ticker-price { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+        <div class="circle circle-3"></div>
+    </div>
+
+    <div class="glass-card">
+        <h1>全球核心资产</h1>
+        <div class="status-indicator">
+            <div class="pulse"></div> 实时 API 联接状态: 活跃 
+        </div>
+
+        <div class="stock-grid" id="stock-grid">
+            </div>
+    </div>
+
+    <script>
+        // 你提供的真实 API 密钥
+        const API_KEY = 'd7a7nmhr01qn9i7jv7j0d7a7nmhr01qn9i7jv7jg';
+
+        // 核心资产列表：使用流动性最强的 ETF 来稳定获取数据
+        const PORTFOLIO = [
+            { id: 'spy',  symbol: 'SPY',  name: '标普 500' },
+            { id: 'qqqm', symbol: 'QQQM', name: '纳斯达克' },
+            { id: 'dia',  symbol: 'DIA',  name: '道琼斯' },
+            { id: 'ibit', symbol: 'IBIT', name: '比特币' }
+        ];
+
+        const gridElement = document.getElementById('stock-grid');
+
+        // 初始化网页卡片结构
+        function initCards() {
+            PORTFOLIO.forEach(stock => {
+                const card = document.createElement('div');
+                card.className = 'ticker-card';
+                card.innerHTML = `
+                    <div class="ticker-name">${stock.name}</div>
+                    <div class="ticker-symbol">${stock.symbol}</div>
+                    <div class="ticker-price neutral" id="price-${stock.id}">获取中...</div>
+                    <div class="ticker-change neutral" id="change-${stock.id}">--</div>
+                `;
+                gridElement.appendChild(card);
+            });
+        }
+
+        // 核心联调函数：向 Finnhub 发起真实网络请求
+        async function fetchMarketData() {
+            for (let i = 0; i < PORTFOLIO.length; i++) {
+                const stock = PORTFOLIO[i];
+                try {
+                    // 发起请求
+                    const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${stock.symbol}&token=${API_KEY}`);
+                    
+                    if (!response.ok) {
+                        console.error(`[${stock.symbol}] 请求受限或失败，状态码: ${response.status}`);
+                        continue;
+                    }
+
+                    const data = await response.json();
+                    
+                    // 提取当前价(c)和昨收价(pc)
+                    const currentPrice = data.c;
+                    const previousClose = data.pc;
+                    
+                    // 如果拿到的是0或空，说明非交易时段或代码有误，跳过
+                    if(!currentPrice || currentPrice === 0) continue;
+
+                    // 计算涨跌额和涨跌幅
+                    const diff = (currentPrice - previousClose).toFixed(2);
+                    const percent = ((diff / previousClose) * 100).toFixed(2);
+                    const isUp = diff >= 0;
+
+                    // 渲染到网页
+                    updateDOM(stock.id, currentPrice.toFixed(2), diff, percent, isUp);
+
+                } catch (error) {
+                    console.error(`[${stock.symbol}] 网络错误:`, error);
+                }
+            }
+        }
+
+        // 更新网页上的数字和颜色
+        function updateDOM(id, price, diff, percent, isUp) {
+            const priceEl = document.getElementById(`price-${id}`);
+            const changeEl = document.getElementById(`change-${id}`);
+
+            priceEl.innerText = `$${price}`;
+            
+            // 格式化涨跌显示：例如 +1.20 (+0.58%)
+            const sign = isUp && diff > 0 ? '+' : '';
+            changeEl.innerText = `${sign}${diff} (${sign}${percent}%)`;
+
+            // 动态控制颜色
+            if (diff > 0) {
+                priceEl.className = 'ticker-price up';
+                changeEl.className = 'ticker-change up';
+            } else if (diff < 0) {
+                priceEl.className = 'ticker-price down';
+                changeEl.className = 'ticker-change down';
+            } else {
+                priceEl.className = 'ticker-price neutral';
+                changeEl.className = 'ticker-change neutral';
+            }
+        }
+
+        // 启动执行
+        initCards();
+        fetchMarketData();
+
+        // 设定每 6 秒刷新一次（4个标的 = 每分钟 40 次请求，安全处于免费额度 60 次/分钟以内）
+        setInterval(fetchMarketData, 6000);
+
+    </script>
+</body>
+</html>
